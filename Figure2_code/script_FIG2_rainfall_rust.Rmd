@@ -1,0 +1,228 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+PLOTS
+
+```{r}
+
+library(ggplot2)
+library(tidyverse)
+#install.packages('patchwork')
+library(patchwork)
+library(ggthemes)
+mycols <- c("#021128","#1b4a64", "#3585a0", "#759580", "#c78f34", "#fd9706","#fdb81c","#fbdb30")
+mycols3a <-c("#021128", "#fd9706", "#3585a0")
+mycols3b <-c("#1b4a64", "#fdb81c", "#759580")
+
+
+dGEN_rain <- read.csv("dataFull_RainRust/dGEN_rain.csv")
+dGEN_rust <- read.csv("dataFull_RainRust/dGEN_rust.csv")
+
+```
+
+
+Coeficients 
+```{r}
+
+for (aidis in unique(dGEN_rust$ID)){
+  coef <- paste("coef", aidis, sep = "_")
+  assign(coef, max(dGEN_rain %>% filter(ID == aidis)%>%select(PP.mm))/max(dGEN_rust %>% filter(ID == aidis)%>% select(Rust)))
+}
+
+
+```
+
+
+BOUDROT
+
+```{r}
+p_BOUD<-
+  ggplot() + 
+  geom_bar(data=dGEN_rain %>% filter(ID== "BOUD") , aes(x=AvDay, y=PP.mm/coef_BOUD), stat="identity", fill=mycols[3], width=30, color=mycols[3], alpha= 0.5)+
+  geom_line(data=dGEN_rust %>% filter(ID== "BOUD"), aes(x=Day, y=Rust), size= 1)+
+  geom_segment(data=dGEN_rain %>% filter(ID== "BOUD"), aes(x =AvDay[1], y =  -4, xend =  AvDay[1]+365, yend =  -4), color= "darkgreen", size= 1) + 
+  scale_y_continuous(
+  name = (dGEN_rust %>% filter(ID== "BOUD")%>% select(UNIT))[1,1],
+  sec.axis = sec_axis(trans= ~.*coef_BOUD, name = "") #voy a quitar rainfall para que no se grafique
+  ) + 
+  theme_bw()+
+  theme(axis.text.x = element_text(colour = "darkgreen"), axis.text.y.right = element_text(color = mycols[3]))+
+  theme(text = element_text(size=12), plot.title = element_text(size=10))+
+  geom_point(data=dGEN_rust %>% filter(ID== "BOUD"), aes(x=Day, y=Rust), size= 1)+
+  labs(x= "",title = "Turrialba, Costa Rica (Jul 13 - Nov 14)")
+
+```
+
+BECK
+
+```{r}
+p_BECK<-
+  ggplot() + 
+  geom_bar(data=dGEN_rain %>% filter(ID== "BECK") , aes(x=AvDay, y=PP.mm/coef_BECK), stat="identity", fill=mycols[3], width=30, color=mycols[3], alpha= 0.5)+
+  geom_line(data=dGEN_rust %>% filter(ID== "BECK"), aes(x=Day, y=Rust), size= 1)+
+  geom_segment(data=dGEN_rain %>% filter(ID== "BECK"), aes(x =AvDay[1], y =  -0.3, xend =  AvDay[1]+365, yend =  -0.3), color= "darkgreen", size= 1) + 
+  scale_y_continuous(
+  name = (dGEN_rust %>% filter(ID== "BECK")%>% select(UNIT))[1,1],
+  sec.axis = sec_axis(trans= ~.*coef_BECK, name = "") #voy a quitar rainfall para que no se grafique
+  ) + 
+  theme_bw()+
+  theme(axis.text.x = element_text(colour = "darkgreen"), axis.text.y.right = element_text(color = mycols[3]))+
+  theme(text = element_text(size=12), plot.title = element_text(size=10))+
+  geom_point(data=dGEN_rust %>% filter(ID== "BECK"), aes(x=Day, y=Rust), size= 1)+
+  labs(x= "",title = "Ruiru, Kenya (Feb 73 - Dec 73)")
+
+```
+
+BOCK
+
+```{r}
+p_BOCK<-
+  ggplot() + 
+  geom_bar(data=dGEN_rain %>% filter(ID== "BOCK") , aes(x=AvDay, y=PP.mm/coef_BOCK), stat="identity", fill=mycols[3], width=30, color=mycols[3], alpha= 0.5)+
+  geom_line(data=dGEN_rust %>% filter(ID== "BOCK"), aes(x=Day, y=Rust), size= 1)+
+  geom_segment(data=dGEN_rain %>% filter(ID== "BOCK"), aes(x =AvDay[1], y =  -0.6, xend =  AvDay[1]+365, yend =  -0.6), color= "darkgreen", size= 1) + 
+  scale_y_continuous(
+  name = (dGEN_rust %>% filter(ID== "BOCK")%>% select(UNIT))[1,1],
+  sec.axis = sec_axis(trans= ~.*coef_BOCK, name = "") #voy a quitar rainfall para que no se grafique
+  ) + 
+  theme_bw()+
+  theme(axis.text.x = element_text(colour = "darkgreen"), axis.text.y.right = element_text(color = mycols[3]))+
+  theme(text = element_text(size=12), plot.title = element_text(size=10))+
+  geom_point(data=dGEN_rust %>% filter(ID== "BOCK"), aes(x=Day, y=Rust), size= 1)+
+  labs(x= "",title = "East Riff, Kenya (Oct 60 - Oct 61)")
+
+```
+
+AVE GUA 
+```{r}
+p_AVE_GUA<-
+  ggplot() + 
+  geom_bar(data=dGEN_rain %>% filter(ID== "AVE_GUA") , aes(x=AvDay, y=PP.mm/coef_AVE_GUA), stat="identity", fill=mycols[3], width=30, color=mycols[3], alpha= 0.5)+
+  geom_line(data=dGEN_rust %>% filter(ID== "AVE_GUA"), aes(x=Day, y=Rust), size= 1)+
+  geom_point(data=dGEN_rust %>% filter(ID== "AVE_GUA"), aes(x=Day, y=Rust), size= 1)+
+  geom_segment(data=dGEN_rain %>% filter(ID== "AVE_GUA"), aes(x =AvDay[1], y =  -2, xend =  AvDay[1]+365, yend =  -2), color= "darkgreen", size= 1) + 
+  geom_segment(aes(x = 222.2, y =  25, xend =  313.1, yend =  25), color= mycols[6], size= 1.5) + 
+    geom_segment(aes(x = 635.5, y =  25, xend = 698.5, yend =  25), color= mycols[6], size= 1.5) + 
+  scale_y_continuous(
+  name = (dGEN_rust %>% filter(ID== "AVE_GUA")%>% select(UNIT))[1,1],
+  sec.axis = sec_axis(trans= ~.*coef_AVE_GUA, name = "") #voy a quitar rainfall para que no se grafique
+  ) + 
+  theme_bw()+
+  theme(axis.text.x = element_text(colour = "darkgreen"), axis.text.y.right = element_text(color = mycols[3]))+
+  theme(text = element_text(size=12), plot.title = element_text(size=10))+
+  labs(x= "",title = "Quetzaltenango, Guatemala (Aug 90 - Aug 91)")
+
+```
+
+
+
+anan 
+
+```{r}
+p_ANAN<-
+  ggplot() + 
+  geom_bar(data=dGEN_rain %>% filter(ID== "ANAN") , aes(x=AvDay, y=PP.mm/coef_ANAN), stat="identity", fill=mycols[3], width=30, color=mycols[3], alpha= 0.5)+
+  geom_line(data=dGEN_rust %>% filter(ID== "ANAN"), aes(x=Day, y=Rust), size= 1)+
+  geom_point(data=dGEN_rust %>% filter(ID== "ANAN"), aes(x=Day, y=Rust), size= 1)+
+  geom_segment(data=dGEN_rain %>% filter(ID== "ANAN"), aes(x =AvDay[1], y =  -6, xend =  AvDay[1]+365, yend =  -6), color= "darkgreen", size= 1) + 
+  geom_segment(aes(x = 318, y =  72, xend =  324, yend =72), color= mycols[6], size= 1.5)+
+  scale_y_continuous(
+  name = (dGEN_rust %>% filter(ID== "ANAN")%>% select(UNIT))[1,1],
+  sec.axis = sec_axis(trans= ~.*coef_ANAN, name = "") #voy a quitar rainfall para que no se grafique
+  ) + 
+  theme_bw()+
+  theme(axis.text.x = element_text(colour = "darkgreen"), axis.text.y.right = element_text(color = mycols[3]))+
+  theme(text = element_text(size=12), plot.title = element_text(size=10))+
+  labs(x= "",title = "Mysore, India (Feb 62 - May 63)")
+```
+
+MULI
+
+
+```{r}
+p_MULI<-
+  ggplot() + 
+  geom_bar(data=dGEN_rain %>% filter(ID== "MULI") , aes(x=AvDay, y=PP.mm/coef_MULI), stat="identity", fill=mycols[3], width=30, color=mycols[3], alpha= 0.5)+
+  geom_line(data=dGEN_rust %>% filter(ID== "MULI"), aes(x=Day, y=Rust), size= 1)+
+  geom_point(data=dGEN_rust %>% filter(ID== "MULI"), aes(x=Day, y=Rust), size= 1)+
+  geom_segment(data=dGEN_rain %>% filter(ID== "MULI"), aes(x =AvDay[1], y =  -6, xend =  AvDay[1]+365, yend =  -6), color= "darkgreen", size= 1) + 
+   geom_segment(aes(x = 166, y =52  , xend =  196, yend =52), color= mycols[6], size= 1.5)+
+  geom_segment(aes(x = 319, y =52  , xend =  349, yend =52), color= mycols[6], size= 1.5)+
+  geom_segment(aes(x = 531, y =52  , xend =  561, yend =52), color= mycols[6], size= 1.5)+
+  scale_y_continuous(
+  name = (dGEN_rust %>% filter(ID== "MULI")%>% select(UNIT))[1,1],
+  sec.axis = sec_axis(trans= ~.*coef_MULI, name = "") #voy a quitar rainfall para que no se grafique
+  ) + 
+  theme_bw()+
+  theme(axis.text.x = element_text(colour = "darkgreen"), axis.text.y.right = element_text(color = mycols[3]))+
+  theme(text = element_text(size=12), plot.title = element_text(size=10))+
+  labs(x= "",title = "Kiambu, Kenya (Apr 69 - Dec 70)")
+```
+
+avEtapa FALTA
+```{r}
+p_AVE_TAPA<-
+  ggplot() + 
+  geom_bar(data=dGEN_rain %>% filter(ID== "AVE_TAPA") , aes(x=AvDay, y=PP.mm/coef_AVE_TAPA), stat="identity", fill=mycols[3], width=30, color=mycols[3], alpha= 0.5)+
+  geom_line(data=dGEN_rust %>% filter(ID== "AVE_TAPA"), aes(x=Day, y=Rust), size= 1)+
+  geom_point(data=dGEN_rust %>% filter(ID== "AVE_TAPA"), aes(x=Day, y=Rust), size= 1)+
+  geom_segment(data=dGEN_rain %>% filter(ID== "AVE_TAPA"), aes(x =AvDay[1], y =  -3, xend =  AvDay[1]+365, yend =  -3), color= "darkgreen", size= 1) + 
+  geom_segment(aes(x = 232.5, y =  25, xend = 360.6, yend =  25), color= mycols[6], size= 1.5) +
+  scale_y_continuous(
+  name = (dGEN_rust %>% filter(ID== "AVE_TAPA")%>% select(UNIT))[1,1],
+  sec.axis = sec_axis(trans= ~.*coef_AVE_TAPA, name = "") #voy a quitar rainfall para que no se grafique
+  ) + 
+  theme_bw()+
+  theme(axis.text.x = element_text(colour = "darkgreen"), axis.text.y.right = element_text(color = mycols[3]))+
+  theme(text = element_text(size=12), plot.title = element_text(size=10))+
+  labs(x= "",title = "Chiapas, Mexico (Feb 88 - Apr 89)")
+```
+
+
+PvANlARG
+
+```{r}
+p_VAN_LON<-
+  ggplot() + 
+  geom_bar(data=dGEN_rain %>% filter(ID== "VAN_LON") , aes(x=AvDay, y=PP.mm/coef_VAN_LON), stat="identity", fill=mycols[3], width=30, color=mycols[3], alpha= 0.5)+
+  geom_line(data=dGEN_rust %>% filter(ID== "VAN_LON"), aes(x=Day, y=Rust), size= 1)+
+  geom_point(data=dGEN_rust %>% filter(ID== "VAN_LON"), aes(x=Day, y=Rust), size= 1)+
+  geom_segment(data=dGEN_rain %>% filter(ID== "VAN_LON"), aes(x =AvDay[1], y =  -7, xend =  AvDay[1]+365, yend =  -7), color= "darkgreen", size= 1) + 
+ geom_segment(aes(x = 248, y =  90, xend =  298, yend =  90), color= mycols[6], size= 1.5) +
+  geom_segment(aes(x = 613, y =  90, xend =  663, yend =  90), color= mycols[6], size= 1.5) +
+    geom_segment(aes(x = 978, y =  90, xend =  1028, yend =  90), color= mycols[6], size= 1.5) +
+  scale_y_continuous(
+  name = (dGEN_rust %>% filter(ID== "VAN_LON")%>% select(UNIT))[1,1],
+  sec.axis = sec_axis(trans= ~.*coef_VAN_LON, name = "") #voy a quitar rainfall para que no se grafique
+  ) + 
+  theme_bw()+
+  theme(axis.text.x = element_text(colour = "darkgreen"), axis.text.y.right = element_text(color = mycols[3]))+
+  theme(text = element_text(size=12), plot.title = element_text(size=10))+
+  labs(x= "",title = "Chiapas, Mexico (Aug 13 - Jun 16)")
+```
+P VQN CORTO
+```{r}
+p_VAN_SHO<-
+  ggplot() + 
+  geom_bar(data=dGEN_rain %>% filter(ID== "VAN_SHO") , aes(x=AvDay, y=PP.mm/coef_VAN_SHO), stat="identity", fill=mycols[3], width=30, color=mycols[3], alpha= 0.5)+
+  geom_line(data=dGEN_rust %>% filter(ID== "VAN_SHO"), aes(x=Day, y=Rust), size= 1)+
+  geom_point(data=dGEN_rust %>% filter(ID== "VAN_SHO"), aes(x=Day, y=Rust), size= 1)+
+ geom_segment(aes(x = 800, y =  -10, xend =  800+365, yend =  -10), color= "darkgreen", size= 1) +
+ geom_segment(aes(x = 978, y =  100, xend =  1028, yend =  100), color= mycols[6], size= 1.5) +
+  scale_y_continuous(
+  name = (dGEN_rust %>% filter(ID== "VAN_SHO")%>% select(UNIT))[1,1],
+  sec.axis = sec_axis(trans= ~.*coef_VAN_SHO, name = "") #voy a quitar rainfall para que no se grafique
+  ) + 
+  theme_bw()+
+  theme(axis.text.x = element_text(colour = "darkgreen"), axis.text.y.right = element_text(color = mycols[3]))+
+  theme(text = element_text(size=12), plot.title = element_text(size=10))+
+  labs(x= "",title = "Chiapas, Mexico (May 15 - Dec 15)")
+```
+
+
+```{r}
+FULL_PLOT <-(p_VAN_LON+p_MULI+p_AVE_GUA)/(p_BOUD+p_BOCK+p_ANAN)/(p_AVE_TAPA+p_BECK+ p_VAN_SHO)
+FULL_PLOT
+```

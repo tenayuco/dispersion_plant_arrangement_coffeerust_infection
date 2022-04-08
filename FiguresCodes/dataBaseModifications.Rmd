@@ -1,0 +1,53 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Explanation: This code uses the superComputer's output and transforms it to a general dataBase *datosFig_Espacio*. It is not necessary to run it if one starts from *datosFig_Espacio*. 
+
+1. Procedure to reduce the number of steps for visualization. Run only once. 
+
+```{r}
+#This function filtrates one row for each 20 rows. This helps to reduce from 30 000 steps (of 0.01 days) per simulation database, to 1500 (of 0.2 days) steps per simulation database. 
+
+Nth.include<-function(dataframe, n)dataframe[(seq(n,to=nrow(dataframe),by=n)),] 
+
+#We then enter the file with the dataframes of the spaced averaged simulations (dfPromedios)
+directory = "/home/salida/" #this is the output of the super computer where all the dataframes of the spatial averages are downloaded. 
+setwd(as.character(directory)+"dfPromedios")
+
+#and run a loop to enter each data frame, reduce it and send it to a new directory
+
+for (nombresDF in list.files()){
+df<- read.csv(nombresDF, header = TRUE)
+df <- Nth.include(df, 50)
+write.csv(df,paste0(as.character(directory)+ "dfPromediosNEW/",nombresDF), row.names = FALSE)
+}
+```
+
+2. Merge all data frames to a big data frame for visualizations
+
+```{r}
+#enter the file with all the new reduced data frames and merge them 
+
+setwd(as.character(directory)+ "dfPromediosNEW/")
+
+library(plyr)
+datosFig_Espacio <- ldply(list.files(), read.csv, header=TRUE)
+# it is important to detach plyr for dplyr to be used
+detach(package:plyr)
+```
+
+3. Modify some aspects of the data frame for the figures. Save the big data frame and only use this one for future runs. 
+
+```{r}
+
+datosFig_Espacio$patron<- as.character(datosFig_Espacio$patron)
+datosFig_Espacio[datosFig_Espacio=="random"] <- "Random (1.99)"
+datosFig_Espacio[datosFig_Espacio=="spaced"] <- "Spaced (2.5)"
+datosFig_Espacio[datosFig_Espacio=="aggregated"] <- " Aggregated (1.23)"
+datosFig_Espacio[datosFig_Espacio=="rows"] <- " Rows (1.54)"
+
+write.csv(datosFig_Espacio, as.character(directory)+ "dataGeneralAverages.csv", row.names = FALSE)
+
+```
