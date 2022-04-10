@@ -1,0 +1,20 @@
+Each of the directories contains the database and scripts for the generation of the figures or the simulations. 
+
+*onePlantSimulation*
+
+This directory contains all the necessary scritps to run the one-plant simulation in an external supercomputer. (more details in the inside readme)
+
+*full_lattice_simulation*
+
+
+This directory contains all the necessary scritps to run the full-lattice simulation in an external supercomputer. (more details in the inside readme)
+
+The outputs of each code must be defined by the user (see inside readme). 
+
+FigureCodes
+
+Contains all the necessary data base (the ouput of the full_lattice and oneplant simulations) to run all the figures, except for the rain vs spores vs time figure (Fig. 2) and Fig 1 that was created in inkscape. 
+
+Figure2_code. 
+
+Contains all the databased sistematized from different papers and the script to run the Figure 2 (spores and rains vs time)

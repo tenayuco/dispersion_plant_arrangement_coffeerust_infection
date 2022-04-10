@@ -1,0 +1,6 @@
+This directory contains:
+
+
+The script to modify the supercomputer output to more readable and useful databases (dataBaseModification). This scripts uses the dataPeaks, DataindividualPlant and creates the dataGeneralAverages
+
+The script to run the figures (code_figures.rmd) using the dataGeneralAverages 
