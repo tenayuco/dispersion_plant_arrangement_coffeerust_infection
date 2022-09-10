@@ -1,0 +1,20 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Explanation: This code uses the superComputer's output and transforms it to a general dataBase *dataIndividualPlant.csv*. It is not necessary to run it if one has the *dataIndividualPlant.csv* file 
+
+1. Procedure to fuse all the patung output for one plant
+
+```{r}
+setwd("./bajadaPatung_onePlant/dfOnePlant/")
+
+library(plyr)
+datosFig_local <- ldply(list.files(), read.csv, header=TRUE)
+```
+
+```{r}
+write.csv(datosFig_local, "dataIndividualPlant.csv", row.names = FALSE)
+```
+

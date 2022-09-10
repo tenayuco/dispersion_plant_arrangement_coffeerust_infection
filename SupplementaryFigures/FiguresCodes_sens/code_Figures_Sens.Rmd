@@ -1,0 +1,355 @@
+---
+title: "Script for Figures from - (Mora Van Cauwelaert et al., 2022)"
+
+output: html_notebook
+---
+
+This script creates the Fig. S1.7 (robustness to the plant-level parameters)
+
+
+Load Packages and colors
+
+```{r}
+mycols <- c("#021128","#1b4a64", "#3585a0", "#759580", "#c78f34", "#fd9706","#fdb81c","#fbdb30")
+mycols3a <-c("#021128", "#fd9706", "#3585a0")
+mycols3b <-c("#1b4a64", "#fdb81c", "#759580")
+library(ggplot2)
+library(patchwork)
+library(tidyverse)
+
+```
+
+
+```{r echo=TRUE}
+
+datosFig_Espacio <- read.csv("./sens_data/dataGeneralAverages_sens.csv")
+
+
+#add an ID per simulations  (3630 IDs)
+n_sim = dim(datosFig_Espacio)[1]/602
+datosFig_Espacio$ID <- rep(1:n_sim, each= 602)  # 602 is the number of steps per simulations after the filter
+###transform steps to days 
+datosFig_Espacio$X <- datosFig_Espacio$X*0.01 
+
+#remove the middle value of Iini and filter the low value of g
+datosFig_Espacio <- datosFig_Espacio %>% 
+  filter(!(Iini==0.010))
+#%>%  
+ # filter(g == 0.015)  
+#%>%  
+ # filter(g== 0.056) 
+```
+
+## 2.2. Maximum and averages
+
+```{r}
+
+#obtain the  maximum values of each serie, according to the ID
+datosMax<- datosFig_Espacio %>% group_by(g,m, Iini, sim, patron, Dc, ID) %>%
+  summarise_all(max)
+
+#subselct in the general data frame rows that contain these maximum values. This procedure works since the values have mutiple decimals, and we don't have to simulations with the exact same value
+
+dgInf <- datosFig_Espacio[datosFig_Espacio$I_prom %in% datosMax$I_prom, ]
+dgInf<- dgInf %>% select(!c(S_prom,S_sd,X_prom,X_sd, I_sd))
+
+#we merge the simulatons per planting pattern to summarise the random simulations and have an average and a standard deviation, only for that planting pattern
+dgInf_ave <- dgInf  %>% group_by(g,m, Iini, patron, r, b1, b2, a, mu) %>%  
+  summarise(meanDc= mean(Dc), sdDc= sd(Dc), meanImax=mean(I_prom), sdImax= sd(I_prom),meanTime=mean(X), sdTime= sd(X), ID=mean(ID) ) 
+
+```
+
+## this code creates different subsets of the general dginfave
+
+```{r}
+dgInf_ave_base <- dgInf_ave %>%
+  filter(r == 0.011) %>%
+  filter(b1 == 0.035) %>%
+  filter(b2 == 0.035) %>%
+  filter(a == 0.65) %>%
+  filter(mu == 0.2)%>%
+  filter(g == 0.0150)
+
+dgInf_ave_r <- dgInf_ave %>%
+  filter(r == 0.009|r == 0.013) 
+dgInf_ave_r <- rbind(dgInf_ave_base, dgInf_ave_r) 
+
+dgInf_ave_b1 <- dgInf_ave %>%
+  filter(b1 == 0.03|b1 == 0.04) 
+dgInf_ave_b1 <- rbind(dgInf_ave_base, dgInf_ave_b1) 
+
+dgInf_ave_b2 <- dgInf_ave %>%
+  filter(b2 == 0.03|b2 == 0.04) 
+dgInf_ave_b2 <- rbind(dgInf_ave_base, dgInf_ave_b2) 
+
+dgInf_ave_a <- dgInf_ave %>%
+  filter(a == 0.1|a == 1.2) 
+dgInf_ave_a <- rbind(dgInf_ave_base, dgInf_ave_a) 
+  
+dgInf_ave_mu <- dgInf_ave %>%
+  filter(mu == 0.1|mu == 0.3) 
+dgInf_ave_mu <- rbind(dgInf_ave_base, dgInf_ave_mu) 
+
+dgInf_ave_g <- dgInf_ave %>%
+  filter(g == 0.0132|g == 0.0172 |g == 0.056) 
+dgInf_ave_g <- rbind(dgInf_ave_base, dgInf_ave_g) 
+
+
+```
+
+
+## 2.4. Figure R Sensitivity (MATI and time to MATI vs m)
+
+```{r}
+Fig_sen_r_A<-dgInf_ave_r %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanImax, col=as.character(Iini), group = interaction(r, Iini)), size=0.5) +
+  geom_point(aes(y = meanImax, col=as.character(Iini), shape= as.character(r)), size= 3) +
+  geom_errorbar(aes(ymin = meanImax - sdImax, ymax = meanImax + sdImax, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+  theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+   theme(plot.margin = unit(c(0,100,0,0), "pt"))+
+  labs(x= "Difusion rate [log(m)]", y= "MATI", col= expression(italic("I0")), shape= expression(rho))
+
+
+Fig_sen_r_B<-dgInf_ave_r %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanTime, col=as.character(Iini), group = interaction(r, Iini)), size=0.5) +
+  geom_point(aes(y = meanTime, col=as.character(Iini),shape= as.character(r)), size= 3) +
+  geom_errorbar(aes(ymin = meanTime - sdTime, ymax = meanTime + sdTime, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+ # theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+  labs(x= "Difusion rate [log(m)]", y= "Time to MATI", col= expression(italic("I0")), shape= expression(rho))
+
+
+#save the figure 
+Fig_sen_r = Fig_sen_r_A + Fig_sen_r_B
+
+ggsave("./output_figures/figS1_7_r.png", height = 10, width = 13)
+
+```
+
+```{r}
+Fig_sen_b1_A<-dgInf_ave_b1 %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanImax, col=as.character(Iini), group = interaction(b1, Iini)), size=0.5) +
+  geom_point(aes(y = meanImax, col=as.character(Iini), shape= as.character(b1)), size= 3) +
+  geom_errorbar(aes(ymin = meanImax - sdImax, ymax = meanImax + sdImax, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+  theme(legend.position = "none")+
+  theme(plot.margin = unit(c(0,100,0,0), "pt"))+
+  theme( strip.text.x = element_blank())+
+  labs(x= "Difusion rate [log(m)]", y= "MATI", col= expression(italic("I0")), shape= expression(beta))
+
+
+Fig_sen_b1_B<-dgInf_ave_b1 %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanTime, col=as.character(Iini), group = interaction(b1, Iini)), size=0.5) +
+  geom_point(aes(y = meanTime, col=as.character(Iini),shape= as.character(b1)), size= 3) +
+  geom_errorbar(aes(ymin = meanTime - sdTime, ymax = meanTime + sdTime, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+ # theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+  labs(x= "Difusion rate [log(m)]", y= "Time to MATI", col= expression(italic("I0")), shape= expression(beta))
+
+
+#save the figure 
+Fig_sen_b1 = Fig_sen_b1_A + Fig_sen_b1_B
+
+ggsave("./output_figures/figS1_7_b1.png", height = 10, width = 13)
+
+
+```
+
+```{r}
+Fig_sen_b2_A<-dgInf_ave_b2 %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanImax, col=as.character(Iini), group = interaction(b2, Iini)), size=0.5) +
+  geom_point(aes(y = meanImax, col=as.character(Iini), shape= as.character(b2)), size= 3) +
+  geom_errorbar(aes(ymin = meanImax - sdImax, ymax = meanImax + sdImax, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+  theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+  theme(plot.margin = unit(c(0,100,0,0), "pt"))+
+  labs(x= "Difusion rate [log(m)]", y= "MATI", col= expression(italic("I0")), shape= expression(beta))
+
+
+Fig_sen_b2_B<-dgInf_ave_b2 %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanTime, col=as.character(Iini), group = interaction(b2, Iini)), size=0.5) +
+  geom_point(aes(y = meanTime, col=as.character(Iini),shape= as.character(b2)), size= 3) +
+  geom_errorbar(aes(ymin = meanTime - sdTime, ymax = meanTime + sdTime, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+ # theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+  labs(x= "Difusion rate [log(m)]", y= "Time to MATI", col= expression(italic("I0")), shape= expression(beta))
+
+
+#save the figure 
+Fig_sen_b2 = Fig_sen_b2_A + Fig_sen_b2_B
+
+ggsave("./output_figures/figS1_7_b2.png", height = 10, width = 13)
+
+```
+
+```{r}
+Fig_sen_a_A<-dgInf_ave_a %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanImax, col=as.character(Iini), group = interaction(a, Iini)), size=0.5) +
+  geom_point(aes(y = meanImax, col=as.character(Iini), shape= as.character(a)), size= 3) +
+  geom_errorbar(aes(ymin = meanImax - sdImax, ymax = meanImax + sdImax, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+  theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+  theme(plot.margin = unit(c(0,100,0,0), "pt"))+
+  labs(x= "Difusion rate [log(m)]", y= "MATI", col= expression(italic("I0")), shape= expression(alpha))
+
+
+Fig_sen_a_B<-dgInf_ave_a %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanTime, col=as.character(Iini), group = interaction(a, Iini)), size=0.5) +
+  geom_point(aes(y = meanTime, col=as.character(Iini),shape= as.character(a)), size= 3) +
+  geom_errorbar(aes(ymin = meanTime - sdTime, ymax = meanTime + sdTime, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+ # theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+  labs(x= "Difusion rate [log(m)]", y= "Time to MATI", col= expression(italic("I0")), shape= expression(alpha))
+
+
+#save the figure 
+Fig_sen_a = Fig_sen_a_A + Fig_sen_a_B
+
+ggsave("./output_figures/figS1_7_a.png", height = 10, width = 13)
+
+
+```
+
+```{r}
+Fig_sen_g_A<-dgInf_ave_g %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanImax, col=as.character(Iini), group = interaction(g, Iini)), size=0.5) +
+  geom_point(aes(y = meanImax, col=as.character(Iini), shape= as.character(g)), size= 3) +
+  geom_errorbar(aes(ymin = meanImax - sdImax, ymax = meanImax + sdImax, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+  theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+  theme(plot.margin = unit(c(0,100,0,0), "pt"))+
+  labs(x= "Difusion rate [log(m)]", y= "MATI", col= expression(italic("I0")), shape= expression(gamma))
+
+
+Fig_sen_g_B<-dgInf_ave_g %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanTime, col=as.character(Iini), group = interaction(g, Iini)), size=0.5) +
+  geom_point(aes(y = meanTime, col=as.character(Iini),shape= as.character(g)), size= 3) +
+  geom_errorbar(aes(ymin = meanTime - sdTime, ymax = meanTime + sdTime, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+ # theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+  labs(x= "Difusion rate [log(m)]", y= "Time to MATI", col= expression(italic("I0")), shape= expression(gamma))
+
+
+#save the figure 
+Fig_sen_g = Fig_sen_g_A + Fig_sen_g_B
+ggsave("./output_figures/figS1_7_g.png", height = 10, width = 13)
+
+
+```
+
+```{r}
+Fig_sen_mu_A<-dgInf_ave_mu %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanImax, col=as.character(Iini), group = interaction(mu, Iini)), size=0.5) +
+  geom_point(aes(y = meanImax, col=as.character(Iini), shape= as.character(mu)), size= 3) +
+  geom_errorbar(aes(ymin = meanImax - sdImax, ymax = meanImax + sdImax, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+  theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+  theme(plot.margin = unit(c(0,100,0,0), "pt"))+
+  labs(x= "Difusion rate [log(m)]", y= "MATI", col= expression(italic("I0")), shape= expression(mu))
+
+
+Fig_sen_mu_B<-dgInf_ave_mu %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanTime, col=as.character(Iini), group = interaction(mu, Iini)), size=0.5) +
+  geom_point(aes(y = meanTime, col=as.character(Iini),shape= as.character(mu)), size= 3) +
+  geom_errorbar(aes(ymin = meanTime - sdTime, ymax = meanTime + sdTime, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron*Iini, ncol = 2) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+ # theme(legend.position = "none")+
+  theme( strip.text.x = element_blank())+
+  labs(x= "Difusion rate [log(m)]", y= "Time to MATI", col= expression(italic("I0")), shape= expression(mu))
+
+
+#save the figure 
+Fig_sen_mu = Fig_sen_mu_A + Fig_sen_mu_B
+
+ggsave("./output_figures/figS1_7_mu.png", height = 10, width = 13)
+
+```
+
+
+
+
+
+

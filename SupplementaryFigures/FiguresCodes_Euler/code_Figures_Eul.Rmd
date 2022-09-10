@@ -1,0 +1,117 @@
+---
+title: "Script for Figures from - (Mora Van Cauwelaert et al., 2022)"
+
+output: html_notebook
+---
+
+This script creates the Fig. S1.6 (robustness of the integration method)
+
+Load Packages and colors
+
+```{r}
+mycols <- c("#021128","#1b4a64", "#3585a0", "#759580", "#c78f34", "#fd9706","#fdb81c","#fbdb30")
+mycols3a <-c("#021128", "#fd9706", "#3585a0")
+mycols3b <-c("#1b4a64", "#fdb81c", "#759580")
+library(ggplot2)
+library(patchwork)
+library(tidyverse)
+
+```
+
+
+
+```{r echo=TRUE}
+datosFig_Espacio <- read.csv("./eulerAnalysis_data/dataGeneralAverages_Euler.csv")
+
+datosFig_Espacio_step001 <- datosFig_Espacio %>%
+  filter(sizeStep == 0.01)
+
+datosFig_Espacio_step002 <- datosFig_Espacio %>%
+  filter(sizeStep == 0.02)
+
+#add an ID per simulations  (IDs)
+n_sim_001 = dim(datosFig_Espacio_step001)[1]/602
+datosFig_Espacio_step001$ID <- rep(1:n_sim_001, each= 602)  # 602 is the number of steps per simulations after the filter
+
+n_sim_002 = dim(datosFig_Espacio_step002)[1]/301 + n_sim_001
+datosFig_Espacio_step002$ID <- rep(331:n_sim_002, each= 301)  # 301 is the number of steps per simulations after the filter
+
+
+datosFig_Espacio <- rbind(datosFig_Espacio_step001, datosFig_Espacio_step002)  #we reunite them again
+
+###transform steps to days 
+datosFig_Espacio$X <- datosFig_Espacio$X*datosFig_Espacio$sizeStep 
+
+#remove the middle value of Iini and filter the low value of g
+datosFig_Espacio <- datosFig_Espacio %>% 
+  filter(!(Iini==0.010))
+#%>%  
+ # filter(g == 0.015)  
+#%>%  
+ # filter(g== 0.056) 
+```
+
+## 2.2. Data Max and Averages
+
+```{r}
+
+#obtain the  maximum values of each serie, according to the ID
+datosMax<- datosFig_Espacio %>% group_by(g,m, Iini, sim, patron, Dc, ID) %>%
+  summarise_all(max)
+
+#subselct in the general data frame rows that contain these maximum values. This procedure works since the values have mutiple decimals, and we don't have to simulations with the exact same value
+
+dgInf <- datosFig_Espacio[datosFig_Espacio$I_prom %in% datosMax$I_prom, ]
+dgInf<- dgInf %>% select(!c(S_prom,S_sd,X_prom,X_sd, I_sd))
+
+#we merge the simulatons per planting pattern to summarise the random simulations and have an average and a standard deviation, only for that planting pattern
+dgInf_ave <- dgInf  %>% group_by(g,m, Iini, patron, r, b1, b2, a, mu, sizeStep) %>%  
+  summarise(meanDc= mean(Dc), sdDc= sd(Dc), meanImax=mean(I_prom), sdImax= sd(I_prom),meanTime=mean(X), sdTime= sd(X), ID=mean(ID) ) 
+
+```
+
+## 2.4. Figure R EulerStep (S1.6)
+
+```{r}
+Fig_sen_EU_A<-dgInf_ave %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanImax, col=as.character(Iini), group = interaction(sizeStep, Iini)), size=0.5) +
+  geom_point(aes(y = meanImax, col=as.character(Iini), shape= as.character(sizeStep)), size= 3) +
+  geom_errorbar(aes(ymin = meanImax - sdImax, ymax = meanImax + sdImax, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron, ncol = 1) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+  theme(legend.position = "none")+
+ # theme( strip.text.x = element_blank())+
+  # theme(plot.margin = unit(c(0,100,0,0), "pt"))+
+  labs(x= "Difusion rate [log(m)]", y= "MATI", col= expression(italic("I0")), shape= expression(Delta))
+
+
+Fig_sen_EU_B<-dgInf_ave %>%
+  #filter(r== 0.009)%>%
+ ggplot(aes(x=log10(m)))+
+  geom_line(aes(y = meanTime, col=as.character(Iini), group = interaction(sizeStep, Iini)), size=0.5) +
+  geom_point(aes(y = meanTime, col=as.character(Iini),shape= as.character(sizeStep)), size= 3) +
+  geom_errorbar(aes(ymin = meanTime - sdTime, ymax = meanTime + sdTime, col=as.character(Iini)),alpha=0.75) +
+  facet_wrap(~ patron, ncol = 1) +
+  scale_color_manual(values= mycols3a)+
+  theme_bw()+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  theme(text = element_text(size=15))+
+ # theme(legend.position = "none")+
+#  theme( strip.text.x = element_blank())+
+  labs(x= "Difusion rate [log(m)]", y= "Time to MATI", col= expression(italic("I0")), shape= expression(paste(Delta, "t")))
+
+
+#save the figure 
+Fig_sen_EU = Fig_sen_EU_A+Fig_sen_EU_B
+
+ggsave("./output_figures/figS1_6.png", height = 10, width = 8)
+
+
+```
+
+

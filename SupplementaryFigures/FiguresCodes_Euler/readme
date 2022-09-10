@@ -1,0 +1,23 @@
+# Figure Codes Euler
+
+**1.eulerAnalysis_data**
+
+This folder contains the following **files**:
+
+**bajadaPatung_Euler**: This folder contains all the output of the supercomputer. In this case each of the internal folders is empty but must be filled with the full_lattice simulation code with the euler specifications. 
+
+
+**dataGeneralAverages_Euler.csv**: This is the general database for the different m, io and patterns, and sizestep conditions for the full lattice visualizations. In this case, the file is empty but can be created with the output from BajadaPAtung_euler
+
+And the following **script**: 
+
+**dataBaseModification_Euler**: This scripts creates the general average data **dataGeneralAverages_Euler.csv** from the output of full_lattice_simulation (in bajadaPatung_Euler). 
+
+
+**2 output_figures**
+
+This folder contains all the generated figures by code_Figures_Eul.rmd 
+
+**code_Figures_Eul.rmd**
+
+This script generates Fig. S1.6 and send it to ouput_figures

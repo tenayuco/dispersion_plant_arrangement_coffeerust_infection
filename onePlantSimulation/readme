@@ -1,93 +1,98 @@
 
-
 Procedure to run the general code for one plant
 
-The onePlantPatung contains all the necessary directories and script in order to rerun all the simulations in a super computer written in Condor (version > 9.0). In particular this code runs on the Patung (SuperComputer) of the LANCIS, Instituto de Ecología, UNAM. 
+The onePlantPatung contains all the necessary directories and scripts to run all the simulations in a super computer written in Condor (version > 9.0). In particular this code runs on the Patung (SuperComputer) of the LANCIS, Instituto de Ecología, UNAM (https://lancis.ecologia.unam.mx/cluster/reglamento/). 
 
 The directory contains:
 
-codigoMa.py
-creator_CI_local.py
-creator_SubmitFile_local.py
+codeGeneral_onePlant.py
+creator_CI_onePlant.py
+creator_SubmitFile_onePlant.py
 __init__.py 
 
 
-----------------------------------
-PROCEDURE
+------------------------------------------------------------
+PROCEDURE [we suppose here that you have already an account in the super Computer and the some specific procedure might change depending on your superComputer requirements.]
 
+----------------------------------------------------------
+
+0. Enter to the terminal in your computer and push the codes from your directories to the supercomputer:
+
+"PATH/subidaPatung_onePlant" is the path to the directory in your computer where you keep the script.
+"sim_OnePlant" is the file in the supercomputer where you will arrange all the files. 
+
+scp -r /PATH/subidaPatung_OnePlant emilio@patung.lancis.ecologia.unam.mx:/srv/home/emilio/sim_onePlant/
+
+[This will ask you your superComputer accout password]
+
+----------------------------------------------------------
 1. Enter the supercomputer Patung (or another supercomputer that runs on Condor >9.0. 
 2. Create and environment and install all the necessary modules:
 
 2.1 Install and activate the environment:
-
 sudo install virtualenv
 python 3 -m venv mienv
 source myenv/bin/activate
 
-2.2. Install all necessary libraries
+2.2. Install all necessary libraries:
 sudo install matplotlib
-....
+sudo install numpy ...
 
 3. Change the main code (codeMa) to executable mode. 
+chmod +x codeGeneral_onePlant.py
 
-chmod +x codigoMa.py
-
-
-4. Create the required directories and intial files
-
+4. Create the required directories and initial files
 4.1. Directories: bitacora, salida and initialConditions
-
 mkdir bitacora salida initialConditions
 cd salida/
-mkdir dfLocal matrix
+mkdir dfOnePlant matrizOnePlant
 
 4.2. Fill the initialConditions directory with the different initial conditions
-
-python3 creatorCI_local.py 
-
+python3 creator_CI_onePlant.py
 
 4.3. List all the files inside the initialConditions in order to have a text file only with the names:
-
 dir initialConditions/  > listCI.txt
 
 4.4. Create the .nwg directory and move the __init__.py inside it
-
 mdkir .nwg
 mv __init__.py ./nwg/
 
-
 5. Create the submit file
-python3 creatorSubmitFile_local.py 
+python3 creator_SubmitFile_onePlant.py
 
 
+----------------------------------------------------------------
 Your directory now should contain the following directories an files:
 
-
-codeMatrizSim.py (activated)
-creator_CI_patung.py
-creator_SubmitFile.py
-__init__.py 
+codeGeneral_onePlant.py (activated)
+creator_CI_onePlant.py
+creator_SubmitFile_onePlant.py
 bitacora
 salida
-salida/dfLocal
-salida/matrix
+salida/dfOnePlant
+salida/matrizOnePlant
 initialConditions
 listCI.txt
-submit_file_local.sub
+submit_file_onePlant.sub
 .nwg
 .nwg/__init__.py
 
 6. Run the submit file in the condor computer
 
-condor_submit submit_file_local.sub
+condor_submit submit_file_onePlant.sub
 
-
-
-The bitacora directory keeps track of the possoble errors and messages. To see how the jobs are beeing submitted check:
+The bitacora directory keeps track of the possible errors and messages. To see how the jobs are beeing submitted check:
 
 condor_q
 
-If everything runs correctly the dfLocal, matrix should have the final files that will be used in order to plot the different figures (see FiguresCodes directory).
+If everything runs correctly the dfOnePlant, matrizOnePlant should have the final files that will be used in order to plot the different figures. The bicatora directory keeps track of the different problems or messages during the simulations (.out, .log and .err) 
+
+--------------------------------------------------
+
+7. Exit the superComputer and from your terminal, download produced files in "salida" to your computer, to produce the different figures. 
+
+
+scp -r emilio@patung.lancis.ecologia.unam.mx:/srv/home/emilio/sim_onePlant/salida "PATH"/FigureCodes/bajadaPatung_onePlant/
 
 
 

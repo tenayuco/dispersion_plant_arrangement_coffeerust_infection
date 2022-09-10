@@ -1,0 +1,290 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This script is for createing the database for figure 2 (spores vs rain)
+
+Load the file with all the data bases. (I am going to make a big data base, and only download this one)
+
+```{r}
+
+library(ggplot2)
+library(tidyverse)
+#install.packages('patchwork')
+library(patchwork)
+library(ggthemes)
+mycols <- c("#021128","#1b4a64", "#3585a0", "#759580", "#c78f34", "#fd9706","#fdb81c","#fbdb30")
+mycols3a <-c("#021128", "#fd9706", "#3585a0")
+mycols3b <-c("#1b4a64", "#fdb81c", "#759580")
+```
+
+DATOS RAIN BOUD
+
+```{r}
+#we open the data directly from the webplotdesing
+
+dBoud_rain<- read.csv("./data/Boudrot_rain.csv")
+dBoud_rust <-read.csv("./data/Boudrot_rust.csv")
+
+#as the data base for rain is pretty noisy, we only took the maximum values and remove the first and last value that correpond to the axis
+dBoud_rain$Day <- as.integer(dBoud_rain$Day) 
+
+dBoud_rain <- dBoud_rain %>% group_by(Day)%>% 
+  summarise(PP.mm = max(PP.mm))
+
+dBoud_rain <-head(dBoud_rain, -1)
+dBoud_rain <-tail(dBoud_rain, -1)
+
+dBoud_rain$AvDay  <- (as.integer((dBoud_rain$Day/30))*30)+15 #asi se le pone el mes
+
+dBoud_rain <- dBoud_rain %>% group_by(AvDay) %>%
+  summarise(PP.mm=sum(PP.mm))
+
+dBoud_rain$ID <- "BOUD"
+dBoud_rust$ID <- "BOUD"
+dBoud_rust$UNIT <- "Spores/Tree (x 10000)"
+dBoud_rust$PASO <- seq(1, dim(dBoud_rust)[1])
+
+dGEN_rain <- dBoud_rain
+dGEN_rust <-  dBoud_rust
+
+rm(dBoud_rain)
+rm(dBoud_rust)
+```
+
+DATA BECKER
+```{r}
+dBecker_rust<- read.csv("./data/Becker_rust.csv", header=TRUE)
+
+dBecker_rust <- dBecker_rust %>% select(Day, "Rust"= Spore.1.25.m)#orale, asi puedes se
+
+dBecker_rust <-dBecker_rust[complete.cases(dBecker_rust), ]
+dBecker_rust$Rust <- dBecker_rust$Rust/1000  #para graficar
+
+dBecker_rain<- read.csv("./data/rainKeniaEast.csv", header=TRUE)
+#datosBeckerRain$Precipitation <- datosBeckerRain$Precipitation*10
+
+dBecker_rain$ID <- "BECK"
+dBecker_rust$ID <- "BECK"
+dBecker_rust$UNIT <- "Spores catch/day (x1000)"
+dBecker_rust$PASO <- seq(1, dim(dBecker_rust)[1])
+
+
+dGEN_rain <- bind_rows(dGEN_rain, dBecker_rain)
+dGEN_rust <- bind_rows(dGEN_rust, dBecker_rust)
+
+rm(dBecker_rain)
+rm(dBecker_rust)
+```
+
+DATA BOCK
+
+```{r}
+dBock_rust<- read.csv("./data/Bock192_rust.csv", header=TRUE)
+dBock_rain<- read.csv("./data/Bock1962_rain.csv", header=TRUE)
+
+dBock_rain$PP.mm <- dBock_rain$PP.in * 25.4 ### inches to mm
+dBock_rain <- dBock_rain %>% select(Day, PP.mm)
+
+dBock_rain <- dBock_rain %>% group_by(Day)%>% 
+  summarise(PP.mm = max(PP.mm))  #with this we remove all errors. 
+
+dBock_rain$Day <- as.integer(dBock_rain$Day) #an here we summarize per day
+dBock_rain <- dBock_rain %>% group_by(Day) %>%
+  summarise(PP.mm= mean(PP.mm))
+
+dBock_rain$AvDay<- (as.integer((dBock_rain$Day/30))*30)+15  #now we create the average day
+
+dBock_rain <- dBock_rain %>% group_by(AvDay) %>%
+  summarise(PP.mm=sum(PP.mm))
+
+dBock_rain$ID <- "BOCK"
+dBock_rust$ID <- "BOCK"
+dBock_rust$UNIT <- "No rust spot/leaf"
+dBock_rust$PASO <- seq(1, dim(dBock_rust)[1])
+
+
+dGEN_rain <- bind_rows(dGEN_rain, dBock_rain)
+dGEN_rust <- bind_rows(dGEN_rust, dBock_rust)
+
+rm(dBock_rain)
+rm(dBock_rust)
+
+```
+Hacer una base de harvest. Con los valores generales. 
+```{r}
+dAvelinoGua_rust<- read.csv("./data/AvelinoGuatemala_rust.csv", header=TRUE)
+dAvelinoGua_rain<- read.csv("./data/AvelinoGuatemala_rain.csv", header=TRUE)
+
+dAvelinoGua_rain$AvDay <- (as.integer((dAvelinoGua_rain$Day/30))*30)+15
+
+dAvelinoGua_rain <- dAvelinoGua_rain %>% group_by(AvDay) %>%
+  summarise(PP.mm=sum(PP.mm))
+
+dAvelinoGua_rain$ID <- "AVE_GUA"
+dAvelinoGua_rust$ID <- "AVE_GUA"
+dAvelinoGua_rust$UNIT <- "Rusted leaves (%)"
+dAvelinoGua_rust$PASO <- seq(1, dim(dAvelinoGua_rust)[1])
+
+
+dGEN_rain <- bind_rows(dGEN_rain, dAvelinoGua_rain)
+dGEN_rust <- bind_rows(dGEN_rust, dAvelinoGua_rust)
+
+rm(dAvelinoGua_rain)
+rm(dAvelinoGua_rust)
+
+```
+rusted leavesanan
+
+```{r}
+dAnan_rust <- read.csv("./data/Ananth_rust.csv")
+dAnan_rain <- bind_rows(read_csv("./data/Ananth_rain1.csv"), read_csv("./data/Ananth_rain2.csv"))
+
+dAnan_rain$Day <- as.integer(dAnan_rain$Day)
+dAnan_rain$PP.mm <- dAnan_rain$PP.in*25.4
+
+dAnan_rain <- dAnan_rain %>% select(Day, PP.mm)
+
+dAnan_rain <- dAnan_rain %>% group_by(Day)%>% 
+  summarise(PP.mm = max(PP.mm))  #with this we remove all errors. 
+
+dAnan_rain <- dAnan_rain[dAnan_rain$PP.mm <70,] #clean spurious values
+dAnan_rain  <- dAnan_rain[dAnan_rain$PP.mm >0,] 
+`%notin%` <- Negate(`%in%`)
+dAnan_rain<-dAnan_rain[dAnan_rain$Day %notin% c(30,61, 121, 244, 305, 335), ]  #lines 
+
+dAnan_rain$AvDay <-(as.integer((dAnan_rain$Day/30))*30)+15
+
+dAnan_rain <- dAnan_rain %>% group_by(AvDay) %>%
+  summarise(PP.mm=sum(PP.mm))
+
+
+dAnan_rain$ID <- "ANAN"
+dAnan_rust$ID <- "ANAN"
+dAnan_rust$UNIT <- "Rusted leaves (%)"
+dAnan_rust$PASO <- seq(1, dim(dAnan_rust)[1])
+
+
+dGEN_rain <- bind_rows(dGEN_rain, dAnan_rain)
+dGEN_rust <- bind_rows(dGEN_rust, dAnan_rust)
+
+rm(dAnan_rain)
+rm(dAnan_rust)
+
+
+```
+
+
+```{r}
+#dMuli_leaves<- read.csv("./data/mulingeLeaves.csv", header=TRUE)
+#datosMulingeLeaves$Number.Leaves_per<-(datosMulingeLeaves$Number.Leaves/20)*100
+
+dMuli_rain<- read.csv("./data/Mulinge_rain.csv", header=TRUE)
+dMuli_rust<- read.csv("./data/Mulinge_rust.csv", header=TRUE)
+
+dMuli_rain$AvDay <- as.integer(dMuli_rain$AvDay)
+
+
+dMuli_rain$ID <- "MULI"
+dMuli_rust$ID <- "MULI"
+dMuli_rust$UNIT <- "Rusted leaves (%)"
+dMuli_rust$PASO <- seq(1, dim(dMuli_rust)[1])
+
+
+dGEN_rain <- bind_rows(dGEN_rain, dMuli_rain)
+dGEN_rust <- bind_rows(dGEN_rust, dMuli_rust)
+
+rm(dMuli_rain)
+rm(dMuli_rust)
+
+
+
+```
+
+
+```{r}
+dAveTapa_rust <- read.csv("./data/AvelinoTapa_rust.csv", header = TRUE)
+dAveTapa_rain <- read.csv("./data/AvelinoTapa_rain.csv", header = TRUE)
+
+
+dAveTapa_rain$ID <- "AVE_TAPA"
+dAveTapa_rust$ID <- "AVE_TAPA"
+dAveTapa_rust$UNIT <- "Rusted leaves (%)"
+dAveTapa_rust$PASO <- seq(1, dim(dAveTapa_rust)[1])
+
+
+
+dGEN_rain <- bind_rows(dGEN_rain, dAveTapa_rain)
+dGEN_rust <- bind_rows(dGEN_rust, dAveTapa_rust)
+
+rm(dAveTapa_rain)
+rm(dAveTapa_rust)
+
+
+```
+
+
+
+```{r}
+dVanLong_rust <- read.csv("./data/VandermeerLong_rust.csv", header = TRUE)
+dVanLong_rain <- read.csv("./data/VandermeerLong_rain.csv", header = TRUE)
+dVanShort_rust <- read.csv("./data/VandermeerShort_rust.csv", header = TRUE)
+dVanShort_rust <- dVanShort_rust %>% select(Day, "Rust"= Rust1)
+dVanShort_rain <- dVanLong_rain[(dVanLong_rain$AvDay>896)&(dVanLong_rain$AvDay<1079),]
+
+dVanLong_rain$ID <- "VAN_LON"
+dVanLong_rust$ID <- "VAN_LON"
+dVanLong_rust$UNIT <- "Rusted leaves (%)"
+dVanLong_rust$PASO <- seq(1, dim(dVanLong_rust)[1])
+
+
+dGEN_rain <- bind_rows(dGEN_rain, dVanLong_rain)
+dGEN_rust <- bind_rows(dGEN_rust, dVanLong_rust)
+
+
+rm(dVanLong_rain)
+rm(dVanLong_rust)
+
+dVanShort_rain$ID <- "VAN_SHO"
+dVanShort_rust$ID <- "VAN_SHO"
+dVanShort_rust$UNIT <- "Rusted leaves (%)"
+dVanShort_rust$PASO <- seq(1, dim(dVanShort_rust)[1])
+
+
+dGEN_rain <- bind_rows(dGEN_rain, dVanShort_rain)
+dGEN_rust <- bind_rows(dGEN_rust, dVanShort_rust)
+
+rm(dVanShort_rain)
+rm(dVanShort_rust)
+
+```
+
+
+```{r}
+
+dGEN_rust_slope <- dGEN_rust %>% filter(UNIT == "Rusted leaves (%)")
+
+RustDIF <- diff(dGEN_rust_slope$Rust)/100 # para ponerlo igua que simuacion
+DayDIF <- diff(dGEN_rust_slope$Day)
+
+RustDIF <- c(0, RustDIF)
+DayDIF <- c(1, DayDIF)
+
+dGEN_rust_slope$RustDIF <- RustDIF
+dGEN_rust_slope$DayDIF <- DayDIF
+
+dGEN_rust_slope$SLOPE <- RustDIF/DayDIF
+
+dGEN_rust_slope$RustDIF[dGEN_rust_slope$PASO == 1] <- 0
+dGEN_rust_slope$DayDIF[dGEN_rust_slope$PASO == 1] <- 1
+dGEN_rust_slope$SLOPE[dGEN_rust_slope$PASO == 1] <- 1
+```
+
+```{r}
+write.csv(dGEN_rain, "./dataFull_RainRust/dGEN_rain.csv")
+write.csv(dGEN_rust, "./dataFull_RainRust/dGEN_rust.csv")
+
+```
+
+

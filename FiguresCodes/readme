@@ -1,6 +1,42 @@
-This directory contains:
+# Figure Codes
+
+**1- onePlant_Data**
+
+This folder contains the following **files**:
+
+**bajadaPatung_onePlant**: This folder contains all the output of the supercomputer. In this case each of the internal folders is empty but must be filled with the oneplant simulation code
+
+**dataIndividualPlant.csv**: This is the general database for the different gamma and io values to produce Fig.3 AB. from the paper.
+
+**examplesIndividualPlant.csv**: This is the database of specific dynamics produced by **generatorExamples_onePlant.py**. It will be used to run the Fig. 3 CD.
+
+And the following **scripts**: 
+
+**onePlant_dataBaseModification**: This scripts creates the general average data for one plant from the output of the general simulations (bajadaPatung_oneplant). (see general readme and scheme for more detail)
+**generatorExamples_onePlant.py**: This script can generate examples for user specified parameters and conditions for one plant
 
 
-The script to modify the supercomputer output to more readable and useful databases (dataBaseModification). This scripts uses the dataPeaks, DataindividualPlant and creates the dataGeneralAverages
+**2.lattice_Data**
 
-The script to run the figures (code_figures.rmd) using the dataGeneralAverages 
+This folder contains the following **files**:
+
+
+**bajadaPatung_fullLattice**: This folder contains all the output of the supercomputer. In this case each of the internal folders is empty but must be filled with the fulllattice simulation code
+
+
+**dataGeneralAverages.csv**: This is the general database for the different m, gamma, io and patterns conditions for the full lattice visualizations. 
+
+**dataPeaks.csv**: This is the database of the peaks of individual plants and the time to reach it.
+
+And the following **script**: 
+
+**dataBaseModification**: This scripts creates the general average data **dataGeneralAverages.csv** and **dataPeaks.csv** from the output of full_lattice_simulation. 
+
+
+**3.output_figures**
+
+This folder contains all the generated figures by code_Figures.rmd 
+
+**4.code_Figures.rmd**
+
+This script generates Fig.3, 4, 5, 6, S1.3, S1.4, S1.5

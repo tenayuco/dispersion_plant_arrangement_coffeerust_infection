@@ -1,10 +1,11 @@
----
+  ---
 title: "Script for Figures from - (Mora Van Cauwelaert et al., 2022)"
 
 output: html_notebook
 ---
 
-This script creates the different figures (except for Fig.1 (the model) and Fig.2-Spores against rainfall). **Part 1** shows the code for figure 3 and S1.3, **Part 2** for figures 4 (general MATI and time to MATI vs m), S1.6 (MATI vs <D>) and 5 (time series). **Part 3** Shows the code for figure 6.
+
+This script generates Fig.3, 4, 5, 6, S1.3, S1.4, S1.5. and send them to the **output_figure** 
 
 Load Packages and colors
 
@@ -23,10 +24,8 @@ library(tidyverse)
 ## 1.1. Fig 3.AB
 
 ```{r echo=TRUE}
-setwd("~/Desktop/archivosTrabajandose_aborrar/articulo1_codigoFiguras/FiguresCodes/")
 
-#we set the equilibrium point
-datosFig_local<- read.csv("dataIndividualPlant.csv")
+datosFig_local<- read.csv("./onePlant_data/dataIndividualPlant.csv")
 datosFig_local$Ieq <- datosFig_local$Imax1-datosFig_local$Imax1.Ieq
 
 #quitar los ultmos valores
@@ -64,15 +63,15 @@ Fig3B <- datosFig_local  %>%
 
 Fig3AB <- Fig3A+Fig3B
 
-Fig3AB
-#ggsave("fig1ParteAB_3.png", height = 4, width = 10)
+ggsave("./output_figures/fig3_AB.png", height = 4, width = 10)
+
 ```
 
 
 ## 1.2. Fig 3.CD
 
 ```{r echo=TRUE}
-d_ex_plant<- read.csv("examplesDataIndividualPlant.csv")
+d_ex_plant<- read.csv("./onePlant_data/examplesIndividualPlant.csv")
 
 Nth.delete<-function(dataframe, n)dataframe[-(seq(n,to=nrow(dataframe),by=n)),] #funcion bajada para borrar lineas
 d_ex_plant<- Nth.delete(d_ex_plant, 2)
@@ -81,7 +80,7 @@ d_ex_plant<- Nth.delete(d_ex_plant, 2)
 library(dplyr)
 
 #primerFiltro
-parEj1<- filter(d_ex_plant, g == 0.056)
+parEj1<- filter(d_ex_plant, g == 0.015)
 parEj2<- filter(d_ex_plant, I0== 0.01)
 
 parEj1 <- parEj1 %>%
@@ -110,18 +109,16 @@ Fig3D <- ggplot(parEj2)+
     
   Fig3CD <- Fig3C+Fig3D
   #save figure
-Fig3CD
+ggsave("./output_figures/fig3_CD.png", height = 4, width = 10)
 ```
 
-
-
-# Part 2 (figures 4 (general MATI and time to MATI vs m), S1.6 (MATI vs <D>) and  5 (time series))
+# Part 2 (figures 4 (general MATI and time to MATI vs m), S1.4 (MATI vs <D>) and  5 (time series))
 
 ## 2. 1. Load the data frame and modify it only to plot the required values
 
 ```{r}
 
-datosFig_Espacio <- read.csv("dataGeneralAverages.csv")
+datosFig_Espacio <- read.csv("./lattice_data/dataGeneralAverages.csv")
 
 #add an ID per simulations  (990 IDs)
 datosFig_Espacio$ID <- rep(1:990, each= 602)  # 602 is the number of steps per simulations after the filter
@@ -159,8 +156,6 @@ dgInf_ave <- dgInf  %>% group_by(g,m, Iini, patron) %>%
 ## 2.3. Procedure to define the time lag and the growth per se from each averaged run. 
 
 We estimate the day when the slope was higher than 0.001, this is, an increase of 0.1% of infection per day
-
-
 ```{r}
 
 #We estimate the slope for each run
@@ -183,17 +178,17 @@ datosSLOPE <- datosFig_Espacio %>%
 
 #we average in order to have the mean values for the random pattern
 
+datosSLOPE$TimeMax <- dgInf$X
+datosSLOPE$TimeGrow <- datosSLOPE$TimeMax- datosSLOPE$X 
+
 datosSLOPE_ave <- datosSLOPE   %>% group_by(g,m, Iini, patron) %>%  
-  summarise(meanTimelag= mean(X), sdTimelag= sd(X), ID=mean(ID)) 
+  summarise(meanTime= mean(TimeMax), sdTime= sd(TimeMax), meanTimeGrow= mean(TimeGrow), sdTimeGrow= sd(TimeGrow), meanTimelag= mean(X), sdTimelag= sd(X), ID=mean(ID)) 
 
 #we merge the new values to the previous data frame, by ID. 
 
-dgInf_ave <- merge(dgInf_ave, datosSLOPE_ave[c(5,6,7)], by= "ID")
-dgInf_ave$meanGrow <- dgInf_ave$meanTime-dgInf_ave$meanTimelag
-
 
 # this code generates the necessary csv for table S3.
-#write.csv(dgInf_ave, "~/Desktop/archivosTrabajandose_aborrar/articulo1_codigoFiguras/FiguraParcela/datosTimeLag.csv")
+write.csv(datosSLOPE_ave, "./output_figures/TimeLag_TimeGrow.csv")
 ```
 
 
@@ -217,7 +212,7 @@ Fig4_A<- dgInf_ave %>%
 #Save the figure
 
 #gather for ggplot viusalization
-dgInf_bars <- gather(dgInf_ave, "classTime", "value", c(12,14))
+dgInf_bars <- gather(datosSLOPE_ave, "classTime", "value", c(7,9))
 dgInf_bars$Iini_classTime <- paste(dgInf_bars$Iini, dgInf_bars$classTime)
 
 #this figure is not the final fig 4 figure (we editted with inkscape using this figure)
@@ -235,11 +230,13 @@ Fig4_B<- dgInf_bars  %>%
   labs(x= "Difusion rate [log(m)]", y= "Time to MATI (Days)", col= "Initial infected trees (%)")
 
 #save the figure 
-Fig4_A + Fig4_B
+Fig4 = Fig4_A + Fig4_B
+
+ggsave("./output_figures/fig4.pdf", height = 10, width = 8)
 ```
 
 
-## 2.5. Figure S1. 6 (MATI and time to MATI vs <D>)
+## 2.5. Figure S1.4 (MATI and time to MATI vs <D>)
 
 
 ```{r}
@@ -247,7 +244,7 @@ dgInf_ave$m[dgInf_ave$m == "0.001"] <- " Low diffusion rate" # le pongo un espac
 dgInf_ave$m[dgInf_ave$m == "0.01"] <- "High diffusion rate"
 
 
-FigS1_6_MATIvsD<- dgInf_ave%>%
+FigS1_4_MATIvsD<- dgInf_ave%>%
   filter(!(m==0.1)) %>%
   filter(!(m==0.005)) %>%
   filter(!(m==0.05)) %>%
@@ -270,7 +267,7 @@ FigS1_6_MATIvsD<- dgInf_ave%>%
 
 #save figure
 
-FigS1_6_timeMATIvsD<- dgInf_ave%>%
+FigS1_4_timeMATIvsD<- dgInf_ave%>%
   filter(!(m==0.1)) %>%
   filter(!(m==0.005)) %>%
   filter(!(m==0.05)) %>%
@@ -288,10 +285,10 @@ FigS1_6_timeMATIvsD<- dgInf_ave%>%
   labs(x= "Pattern Index (D)", y= "Time to MATI", col= "Initial proportion of infected trees")
 
 #save figure
-FigS1_6_MATIvsD + FigS1_6_timeMATIvsD
+FigS1_4 = FigS1_4_MATIvsD + FigS1_4_timeMATIvsD
 
+ggsave("./output_figures/figS1_4.png", height = 8, width = 8)
 ```
-
 
 
 ## 2.6. Time series of figure 5.
@@ -322,40 +319,23 @@ Fig5_timeSeries <- datosFig_Espacio %>%
 
 #save figure
 Fig5_timeSeries
+ggsave("./output_figures/fig5.png", height = 8, width = 10)
 ```
 
 
 
 # Part 3. Figure 6 (histograms)
-
 ## 3.1  Load and modify data base
 
 ```{r}
-
-setwd("~/Desktop/archivosTrabajandose_aborrar/articulo1_codigoFiguras/FiguresCodes/")
-
-datosPicosPlanta <-read.csv("dataPeaks.csv", header = TRUE)
-
-#https://www.r-bloggers.com/2013/08/date-formats-in-r/
-
-datosPicosPlanta$Patron<- as.character(datosPicosPlanta$Patron)
-datosPicosPlanta$contador <- 1
-datosPicosPlanta$ID <- rep(1:(dim(datosPicosPlanta)[1]/50), each= 50)
-datosPicosPlanta$TiempoImax <- round(datosPicosPlanta$TiempoImax)
-
-#esto marca los valores de D. Es importante el random es el promedio de esta simulacion
-datosPicosPlanta[datosPicosPlanta=="random"] <- "Random (1.99)"
-datosPicosPlanta[datosPicosPlanta=="spaced"] <- "Spaced (2.5)"
-datosPicosPlanta[datosPicosPlanta=="aggregated"] <- " Aggregated (1.23)"
-datosPicosPlanta[datosPicosPlanta=="rows"] <- " Rows (1.54)"
-
+datosPicosPlanta <-read.csv("./lattice_data/dataPeaks2.csv", header = TRUE)
 ```
 
 
 
 ```{r}
 datosHisto <- datosPicosPlanta %>%
-   filter(TiempoImax<300) %>%
+   filter(TiempoImax<302) %>%
   filter(g==0.015) %>%
   #filter(g==0.056) %>%  ##use only for SUPP
   
@@ -377,8 +357,10 @@ datosHisto$tasaMig[datosHisto$tasaMig == "0.001"] <- " Low diffusion rate"
 datosHisto$tasaMig[datosHisto$tasaMig == "0.01"] <- "High diffusion rate"
 
 # grooup by pattern to count the number of trees that reach the max in the same cat
-datosTotal <- datosHisto %>% group_by(Sim, Patron, tasaMig, g, Dc, Ini, ID, numCat) %>%   #aqui quite el tiempoImax
-  summarise(contadorAgg = sum(contador))
+datosTotal <- datosHisto %>% 
+  filter(Imax>0.7) %>%
+  group_by(Sim, Patron, tasaMig, g, Dc, Ini, ID, numCat) %>%   #aqui quite el tiempoImax
+  summarise(contadorAgg = sum(contador), ImaxPro = mean(Imax))  #aqui hice un cambio
 
 # for each ID, make the cumulative sum
 datosTotal <- datosTotal %>% 
@@ -390,13 +372,10 @@ datosTotal$Ini <- as.character(datosTotal$Ini)
 datosTotal$Ini[datosTotal$Ini== "0.001"] <- " Low initial infection (I0)" # le pongo un espacio de más para el orden final de la figura
 datosTotal$Ini[datosTotal$Ini == "0.1"] <- "High initial infection (I0)"
 datosTotal<- datosTotal %>%  unite("mig_Ini", tasaMig, Ini, remove = FALSE)
-
-
 ```
 
 ## 3.2 Fig 6- Histogram
 ```{r}
-
 Fig6_histoAcc <-   datosTotal%>% 
   ggplot(aes(x= numCat*14))+
 #  geom_point(aes(color = mig_Ini), size = 2)+
@@ -408,18 +387,42 @@ Fig6_histoAcc <-   datosTotal%>%
   theme(panel.spacing.y = unit(1, "lines"))+
   theme(legend.position = "none")+
   theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
-  scale_color_manual(values= mycols[c(1,6,2,7)])+
-  scale_fill_manual(values= mycols[c(1,6,2,7)])+
+  scale_color_manual(values= mycols[c(1,6,3,8)])+
+  scale_fill_manual(values= mycols[c(1,6,3,8)])+
   facet_grid(Patron~Ini*tasaMig)+
-  labs(linetype= "I0", x= "Time (Days)", y= "Proportion of trees that reach maximum infection")
-
-
+  labs(linetype= "I0", x= "Time (Days)", y= "Proportion of trees that reach a high maximum infection")
 
 Fig6_histoAcc
+
+ggsave("./output_figures/Fig6.png", height = 8, width = 10)
+
+```
+
+
+Supplemantary Fig S1.5 Maximum individual tree infections
+ 
+```{r}
+FigS1_5<-   datosHisto%>% 
+  #filter(Imax >0.5)%>% 
+  ggplot(aes(x= TiempoImax, y= Imax))+
+#  geom_point(aes(color = mig_Ini), size = 2)+
+  geom_point(aes(fill = mig_Ini), size =3, colour="black",pch=21)+
+  theme_bw()+
+  theme(text = element_text(size=15))+
+  theme(panel.spacing.y = unit(1, "lines"))+
+  theme(legend.position = "none")+
+  theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
+  scale_color_manual(values= mycols[c(1,6,3,8)])+
+  scale_fill_manual(values= mycols[c(1,6,3,8)])+
+  facet_grid(Patron~Ini*tasaMig)+
+  labs(linetype= "I0", x= "Time (Days)", y= "Maximum individual tree infection")
+
+
+ggsave("./output_figures/FigS1_5.png", height = 8, width = 10)
+
 ```
 
 
 
- 
 
 
