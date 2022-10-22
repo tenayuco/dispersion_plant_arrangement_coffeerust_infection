@@ -32,6 +32,8 @@ datosFig_local$Ieq <- datosFig_local$Imax1-datosFig_local$Imax1.Ieq
 datosFig_local <-  datosFig_local[datosFig_local$g!= 0.2,]
 datosFig_local$I0 <- datosFig_local$I0*100
 
+datosFig_local <- datosFig_local %>%
+  filter(g<0.14)
 
 #todo esto ya no va  estar
 #cortar la simulacion a 300 (osea todos los valores mayores a 300, asumimo que fueron 300..) VERIF
@@ -238,25 +240,21 @@ ggsave("./output_figures/fig4.pdf", height = 10, width = 8)
 
 ## 2.5. Figure S1.4 (MATI and time to MATI vs <D>)
 
-
 ```{r}
-dgInf_ave$m[dgInf_ave$m == "0.001"] <- " Low diffusion rate" # le pongo un espacio de más para el orden final de la figura
-dgInf_ave$m[dgInf_ave$m == "0.01"] <- "High diffusion rate"
-
-
 FigS1_4_MATIvsD<- dgInf_ave%>%
-  filter(!(m==0.1)) %>%
-  filter(!(m==0.005)) %>%
-  filter(!(m==0.05)) %>%
+  filter(Iini == 0.001)%>%
+  #filter(!(m==0.1)) %>%
+  #filter(!(m==0.005)) %>%
+  #filter(!(m==0.05)) %>%
   #g == 0.056 
   #  filter(!(IresPro==5)) %>% 
   #filter(!(meanTime>399))%>%  #esnayo
   ggplot(aes(x=meanDc, y= meanImax))+
-  geom_point(aes(y = meanImax, col= as.factor(Iini)), size=2) +
+  geom_point(aes(y = meanImax, group= as.factor(m)), size=2) +
   geom_errorbar(aes(ymin = meanImax - sdImax, ymax = meanImax + sdImax, col= as.factor(Iini)),alpha=0.75) +
   geom_errorbarh(aes(xmin = meanDc - sdDc, xmax = meanDc + sdDc, col=as.factor(Iini)),alpha=0.75)+
-  geom_line(aes(y = meanImax, col=as.character(Iini)), size=0.5) +
-  facet_wrap(~ m, ncol = 1) +
+  geom_line(aes(y = meanImax, group= as.factor(m), linetype=as.factor(m)), size=0.5) +
+  #facet_wrap(~ Iini, ncol = 1) +
   scale_color_manual(values= mycols[c(1,6,2,7)])+
   theme_bw()+
   theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
@@ -265,30 +263,33 @@ FigS1_4_MATIvsD<- dgInf_ave%>%
   labs(x= "Pattern Index (D)", y= "MATI", col= "Initial proportion of infected trees")
 
 
-#save figure
-
 FigS1_4_timeMATIvsD<- dgInf_ave%>%
-  filter(!(m==0.1)) %>%
-  filter(!(m==0.005)) %>%
-  filter(!(m==0.05)) %>%
+  filter(Iini == 0.001)%>%
+  #filter(!(m==0.1)) %>%
+  #filter(!(m==0.005)) %>%
+  #filter(!(m==0.05)) %>%
+  #g == 0.056 
+  #  filter(!(IresPro==5)) %>% 
+  #filter(!(meanTime>399))%>%  #esnayo
   ggplot(aes(x=meanDc, y= meanTime))+
-  geom_point(aes(y = meanTime, col= as.factor(Iini)), size=2) +
+  geom_point(aes(y = meanTime, group= as.factor(m)), size=2) +
   geom_errorbar(aes(ymin = meanTime - sdTime, ymax = meanTime + sdTime, col= as.factor(Iini)),alpha=0.75) +
   geom_errorbarh(aes(xmin = meanDc - sdDc, xmax = meanDc + sdDc, col=as.factor(Iini)),alpha=0.75)+
-  geom_line(aes(y = meanTime, col=as.character(Iini)), size=0.5) +
-  facet_wrap(~ m, ncol = 1) +
+  geom_line(aes(y = meanTime, group= as.factor(m), linetype=as.factor(m)), size=0.5) +
+  #facet_wrap(~ Iini, ncol = 1) +
   scale_color_manual(values= mycols[c(1,6,2,7)])+
   theme_bw()+
   theme(strip.background = element_rect(color="white", fill="white", size=1.5))+
   theme(text = element_text(size=15))+
   theme(legend.position = "none")+
-  labs(x= "Pattern Index (D)", y= "Time to MATI", col= "Initial proportion of infected trees")
+  labs(x= "Pattern Index (D)", y= "Time to MATI (days)", col= "Initial proportion of infected trees")
 
-#save figure
 FigS1_4 = FigS1_4_MATIvsD + FigS1_4_timeMATIvsD
 
-ggsave("./output_figures/figS1_4.png", height = 8, width = 8)
+ggsave("./output_figures/figS1_4.png", height = 4, width = 8)
+
 ```
+
 
 
 ## 2.6. Time series of figure 5.
