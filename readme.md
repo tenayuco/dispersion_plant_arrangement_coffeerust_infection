@@ -1,7 +1,11 @@
 
-# General Codes for MoraVanCauwelaert
+# General Codes for MoraVanCauwelaert 2023 - Dispersal and plant arrangement condition the timing and magnitude of coffee rust infection
+
+https://www.sciencedirect.com/science/article/abs/pii/S0304380022003040
+
 
 This folder contains all the requirements to run the model and generate the different outputs as dataframes. It also has the scripts to modify this outputs and generate the different figures of the paper. 
+
 
 Nonetheless it is important to note 2 things:
 
